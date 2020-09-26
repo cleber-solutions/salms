@@ -37,7 +37,7 @@ function components.activate(x, y)
     if components_matrix[gx] then
         c = components_matrix[gx][gy]
         if c then
-            c["active"] = true
+            c.active = true
         end
     end
 end
@@ -61,9 +61,15 @@ function Component:create(base, name, x, y)
     object.name = name
     object.label = name
     object.coordinates = {x, y}
+
     object.status = nil
+    object.active = false
+
     object.input_list = {}
+    object.input_list_len = 0
     object.response_list = {}
+    object.response_list_len = 0
+    object.pending_call_len = 0
     object.waiting = false
 
     return object
@@ -74,6 +80,21 @@ function Component:action()
 end
 
 function Component:draw(rx, ry)
+    if self.active then
+        love.graphics.setColor(0.25, 0.8, 0.25) -- green
+        love.graphics.rectangle("fill", rx, ry, grid_w, grid_h)
+    end
+
+    if self.input_list_len > 0 then
+        love.graphics.setColor(0.5, 0.25, 1) -- magenta
+        love.graphics.rectangle("fill", rx, ry, grid_w, grid_h)
+    end
+
+    if self.pending_call_len > 0 then
+        love.graphics.setColor(0.25, 0.5, 1)
+        love.graphics.rectangle("fill", rx, ry, grid_w, grid_h)
+    end
+
     love.graphics.setColor(0, 0, 0)
     love.graphics.printf(
         self.label,
@@ -122,6 +143,7 @@ end
 
 function Component:call_neighbour(n, argument, caller, context)
     table.insert(n.input_list, CallData:create(caller, argument, context))
+    self.pending_call_len = self.pending_call_len + 1
 end
 
 function Component:respond(call_args, response, context)
@@ -131,6 +153,15 @@ end
 
 function Component:receive_response(response_data)
     table.insert(self.response_list, response_data)
+    self.pending_call_len = self.pending_call_len - 1
+    
+    if self.pending_call_len == 0 then
+        self:last_call_resolved()
+    end
+end
+
+function Component:last_call_resolved()
+    -- self.active = false
 end
 
 ResponseData = {}
@@ -170,13 +201,14 @@ function Component:call(method_name, argument, context)
     if not self.status then
         self.status = "call "..method_name
         self:call_neighbours(method_name, argument, context)
-        self.active = true
     end
 end
 
 -- CALLS
 function Component:process_calls()
+    len = 0
     for idx, call_args in ipairs(self.input_list) do
+        len = len + 1
         if not call_args.waiting then
             call_args.step = call_args.step + 1
             done = self:call_step(call_args)
@@ -185,6 +217,8 @@ function Component:process_calls()
             end
         end
     end
+
+    self.input_list_len = len
 end
 
 function Component:call_step(call_args)
@@ -192,7 +226,6 @@ function Component:call_step(call_args)
 
     if step == 0 then
         self.status = "CALL: "..call_args["argument"]
-        self.active = true
     elseif step == 1 then
         self.status = "Processing..."
     elseif step == 2 then
@@ -202,7 +235,6 @@ function Component:call_step(call_args)
         self:respond(call_args, "received")
     elseif step == 4 then
         self.status = nil
-        self.active = false
         return true  -- done
     end
 end
@@ -213,19 +245,16 @@ end
 
 -- RESPONSES
 function Component:process_responses()
-    resolved = 0
+    len = 0
     for idx, response_data in ipairs(self.response_list) do
+        len = len + 1
         response_data.step = response_data.step + 1
         done = self:response_step(response_data)
         if done then
             table.remove(self.response_list, idx)
-            resolved = resolved + 1
         end
     end
-
-    if resolved > 0 then
-        self.active = false
-    end
+    self.response_list_len = len
 end
 
 function Component:response_step(response_data)

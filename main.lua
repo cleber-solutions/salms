@@ -3,7 +3,7 @@ schema = require("schema")
 grid = require "grid"
 
 function love.load()
-    -- image = love.graphics.newImage("cake.jpg")
+    love.window.setTitle("salms: Software Architecture Live Diagrams")
     x_offset = 0
     y_offset = 0
 
@@ -55,11 +55,6 @@ function love.draw()
 
         -- Draw only VISIBLE components
         if not (rx < -grid_w or ry < -grid_h or rx > ww or ry > wh) then
-            if c["active"] then
-                love.graphics.setColor(0, 1, 0)
-                love.graphics.rectangle("fill", rx, ry, grid_w, grid_h)
-            end
-
             c:draw(rx, ry)
 
             -- Connect to neighbours:
