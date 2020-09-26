@@ -2,6 +2,8 @@
 
 **FEEL FREE TO CONTRIBUTE TO THIS PROJECT**
 
+![GIF demonstranting the results](https://raw.githubusercontent.com/cleber-solutions/salms/master/img/grpc-dynamo-and-amqp.gif)
+
 As a Software Architect I'm a big fan of
 **sequence diagrams**. I like the way they convey so much
 information in a orderly manner. But it can be quite a
