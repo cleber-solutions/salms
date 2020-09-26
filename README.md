@@ -22,6 +22,11 @@ component and be able to easily show basic things like:
 * then send a message to other components;
 * and only then respond as a successful transaction.
 
+## Running
+
+1. You must have [Löve](https://love2d.org/) installed.
+1. Inside the repo root directory, run `love .`.
+
 ## How this system works
 
 ### Beats and steps
