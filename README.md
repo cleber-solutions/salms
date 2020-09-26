@@ -109,7 +109,7 @@ function GRPC_Service:call_action(call_args)
     call_args.waiting = true
 end
 
-function Component:response_step_one(response_data)
+function GRPC_Service:response_step_one(response_data)
     if response_data.responder.input_type == "db" then
         -- Saved on database, now send message to other components:
         self.status = "Sending message..."
