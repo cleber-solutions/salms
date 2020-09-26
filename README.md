@@ -27,6 +27,10 @@ component and be able to easily show basic things like:
 1. You must have [Löve](https://love2d.org/) installed.
 1. Inside the repo root directory, run `love .`.
 
+### Defining a diagram
+
+Edit `schema.lua` and lay out your components as needed.
+
 ## How this system works
 
 ### Beats and steps

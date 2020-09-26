@@ -31,6 +31,7 @@ function components.add(x, y, component)
 end
 
 --
+--
 function components.activate(x, y)
     gx, gy = coords_to_grid(x, y)
     if components_matrix[gx] then
@@ -72,6 +73,31 @@ function Component:action()
     print("ACTION")
 end
 
+function Component:draw(rx, ry)
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.printf(
+        self.label,
+        rx, ry + 15,
+        grid_w,
+        'center'
+    )
+
+    if self.status then
+        love.graphics.printf(
+            self.status,
+            rx, ry + 30,
+            grid_w,
+            'center'
+        )
+    end
+
+    self:post_draw(rx, ry)
+end
+
+function Component:post_draw(rx, ry)
+end
+
+-- 
 function Component:call_neighbours(input_type, argument, context)
     x, y = unpack(self.coordinates)
 
@@ -132,6 +158,10 @@ end
 function Component:beat()
     self:process_calls()
     self:process_responses()
+    self:post_beat()
+end
+
+function Component:post_beat()
 end
 --
 
@@ -183,12 +213,18 @@ end
 
 -- RESPONSES
 function Component:process_responses()
+    resolved = 0
     for idx, response_data in ipairs(self.response_list) do
         response_data.step = response_data.step + 1
         done = self:response_step(response_data)
         if done then
             table.remove(self.response_list, idx)
+            resolved = resolved + 1
         end
+    end
+
+    if resolved > 0 then
+        self.active = false
     end
 end
 

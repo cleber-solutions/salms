@@ -60,22 +60,7 @@ function love.draw()
                 love.graphics.rectangle("fill", rx, ry, grid_w, grid_h)
             end
 
-            love.graphics.setColor(0, 0, 0)
-            love.graphics.printf(
-                c["label"],
-                rx, ry + 15,
-                grid_w,
-                'center'
-            )
-
-            if c["status"] then
-                love.graphics.printf(
-                    c["status"],
-                    rx, ry + 30,
-                    grid_w,
-                    'center'
-                )
-            end
+            c:draw(rx, ry)
 
             -- Connect to neighbours:
             for idx, connector in ipairs(c["connectors"]) do
