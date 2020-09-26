@@ -132,4 +132,5 @@ You'll find more components inside the `components` directory.
 * Writing about it.
 * **Writing new components**
 * Helping to improve the code, specially to make it
-  easier to use for other Architects.
+  easier to use for other Architects. (Check `TODO.md`
+  file.)
