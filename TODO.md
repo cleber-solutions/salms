@@ -1,5 +1,13 @@
 # To do list
 
+## Visualization
+
+* Groups: maybe simply establish a color for each one and
+  paint the components background (out of the rectangle
+  itself) in a way that two or more neighbour components
+  would seem connected (and disjoint ones would still be
+  recognizable as part of the same group).
+
 ## Keybindings
 
 * Press `c' to center on selected cell.
