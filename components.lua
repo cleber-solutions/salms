@@ -3,22 +3,10 @@ local components = {}
 components_matrix = {}
 components_list = {}
 
-function components.add(x, y, component)
+function components.add(component)
     -- Test for each neighbour.
     -- If it exists, create a new connector:
-    connectors = {}
-    if components_matrix[x-1] and components_matrix[x-1][y] then
-        table.insert(connectors, {0, grid_h / 2, -grid_space_w, grid_h / 2}) -- left
-    elseif components_matrix[x+1] and components_matrix[x+1][y] then
-        table.insert(connectors, {grid_w, grid_h / 2, grid_w + grid_space_w, grid_h / 2})  -- right
-    elseif components_matrix[x] then
-        if components_matrix[x][y-1] then
-            table.insert(connectors, {grid_w / 2, 0, grid_w / 2, -grid_space_h})  -- up
-        elseif components_matrix[x][y+1] then
-            table.insert(connectors, {grid_w / 2, grid_h, grid_w / 2, grid_h + grid_space_h})  -- down
-        end
-    end
-    component.connectors = connectors
+    x, y = unpack(component.coordinates)
 
     -- Actually add component to the components_list and components_matrix
     table.insert(components_list, component)
@@ -30,7 +18,12 @@ function components.add(x, y, component)
     components_matrix[x][y] = component
 end
 
---
+function components.load_neighbourhood()
+    for idx, c in ipairs(components_list) do
+        c:load_connectors()
+    end
+end
+
 --
 function components.activate(x, y)
     gx, gy = coords_to_grid(x, y)
@@ -47,23 +40,31 @@ function components.run_action(x, y)
     if components_matrix[gx] then
         c = components_matrix[gx][gy]
         if c then
-            c:action()
+            c:do_call_action()
         end
     end
 end
 
-Component = {}
+Component = {
+    success_response = 0,
+    failure_response = 1,
+}
 Component.__index = Component
 function Component:create(base, name, x, y)
-    local object = base
-    setmetatable(object, Component)
+    setmetatable(base, Component)
+    base.__index = base
+
+    local object = {}
+    setmetatable(object, base)
 
     object.name = name
     object.label = name
     object.coordinates = {x, y}
 
     object.status = nil
+    object.action_called = false
     object.active = false
+    object.disabled = false
 
     object.input_list = {}
     object.input_list_len = 0
@@ -75,39 +76,92 @@ function Component:create(base, name, x, y)
     return object
 end
 
+function Component:load_connectors()
+    x, y = unpack(self.coordinates)
+
+    connectors = {}
+
+    neighbourhood = {
+        {0, 1, {grid_w / 2, grid_h, grid_w / 2, grid_h + grid_space_h}}, -- down
+        {0, -1, {grid_w / 2, 0, grid_w / 2, -grid_space_h}}, -- up
+        {-1, 0, {0, grid_h / 2, -grid_space_w, grid_h / 2}}, -- left
+        {1, 0, {grid_w, grid_h / 2, grid_w + grid_space_w, grid_h / 2}} -- right
+    }
+
+    for idx, coords in ipairs(neighbourhood) do
+        ox, oy, line_points = unpack(coords)
+        rx = x + ox
+        ry = y + oy
+
+        line = components_matrix[rx]
+        if line then
+            cell = line[ry]
+            if cell then
+                table.insert(connectors, line_points)
+            end
+        end
+    end
+
+    self.connectors = connectors
+end
+
+function Component:do_call_action()
+    if not self.action_called then
+        self.action_called = true
+        self:action()
+    end
+end
+
 function Component:action()
-    print("ACTION")
+    self.disabled = not self.disabled
+    if self.disabled then
+        self.status = "DISABLED"
+    else
+        self.status = nil
+    end
 end
 
 function Component:draw(rx, ry)
-    if self.active then
-        love.graphics.setColor(0.25, 0.8, 0.25) -- green
+    if self.disabled then
+        love.graphics.setColor(0.8, 0.8, 0.8)
+        love.graphics.rectangle("fill", rx, ry, grid_w, grid_h)
+    elseif self.action_called then
+        love.graphics.setColor(1, 0.5, 0.25)
+        love.graphics.rectangle("fill", rx, ry, grid_w, grid_h)
+    elseif self.pending_call_len > 0 then
+        love.graphics.setColor(0.25, 1, 0.25)
+        love.graphics.rectangle("fill", rx, ry, grid_w, grid_h)
+    elseif self.response_list_len > 0 then
+        love.graphics.setColor(0.5, 0.25, 1)
+        love.graphics.rectangle("fill", rx, ry, grid_w, grid_h)
+    elseif self.input_list_len > 0 then
+        love.graphics.setColor(0.25, 1, 1)
+        love.graphics.rectangle("fill", rx, ry, grid_w, grid_h)
+    elseif self.active then
+        love.graphics.setColor(1, 0.25, 0.25)
         love.graphics.rectangle("fill", rx, ry, grid_w, grid_h)
     end
 
-    if self.input_list_len > 0 then
-        love.graphics.setColor(0.5, 0.25, 1) -- magenta
-        love.graphics.rectangle("fill", rx, ry, grid_w, grid_h)
+    -- Icon
+    if self.icon then
+        icon = love.graphics.newImage("icons/"..self.icon)
+        love.graphics.draw(icon, rx + 2, ry + 2, 0, 1, 1, 0, 0, 0, 0)
     end
 
-    if self.pending_call_len > 0 then
-        love.graphics.setColor(0.25, 0.5, 1)
-        love.graphics.rectangle("fill", rx, ry, grid_w, grid_h)
-    end
-
+    -- Label and status
     love.graphics.setColor(0, 0, 0)
     love.graphics.printf(
         self.label,
-        rx, ry + 15,
-        grid_w,
+        rx + 36, ry + 5,
+        grid_w - 36,
         'center'
     )
 
     if self.status then
         love.graphics.printf(
             self.status,
-            rx, ry + 30,
-            grid_w,
+            rx + 36, ry + 30,
+            grid_w - 36,
             'center'
         )
     end
@@ -122,6 +176,8 @@ end
 function Component:call_neighbours(input_type, argument, context)
     x, y = unpack(self.coordinates)
 
+    successful_calls = 0
+
     neighbours_positions = {
         {0, 1}, {0, -1},
         {1, 0}, {-1, 0}
@@ -133,17 +189,27 @@ function Component:call_neighbours(input_type, argument, context)
         if components_matrix[x+ox] then
             n = components_matrix[x+ox][y+oy]
             if n and n.input_type == input_type then
-                self:call_neighbour(n, argument, self, context)
-                return
+                called_succesfully = self:call_neighbour(n, argument, self, context)
+                if called_succesfully then
+                    successful_calls = successful_calls + 1
+                end
             end
         end
     end
+
+    return successful_calls
 end
 
 
 function Component:call_neighbour(n, argument, caller, context)
+    if n.disabled then
+        self.status = n.label.." is disabled"
+        return false
+    end
+
     table.insert(n.input_list, CallData:create(caller, argument, context))
     self.pending_call_len = self.pending_call_len + 1
+    return true
 end
 
 function Component:respond(call_args, response, context)
@@ -190,6 +256,7 @@ function Component:beat()
     self:process_calls()
     self:process_responses()
     self:post_beat()
+    self.action_called = false
 end
 
 function Component:post_beat()
@@ -198,10 +265,8 @@ end
 
 -- Calling and responding:
 function Component:call(method_name, argument, context)
-    if not self.status then
-        self.status = "call "..method_name
-        self:call_neighbours(method_name, argument, context)
-    end
+    self.status = "call "..method_name
+    self:call_neighbours(method_name, argument, context)
 end
 
 -- CALLS
@@ -229,10 +294,13 @@ function Component:call_step(call_args)
     elseif step == 1 then
         self.status = "Processing..."
     elseif step == 2 then
-        self:call_action(call_args)
+        done = self:call_action(call_args)
+        if done then
+            return true
+        end
     elseif step == 3 then
         self.status = "Done"
-        self:respond(call_args, "received")
+        self:respond(call_args, self.success_response)
     elseif step == 4 then
         self.status = nil
         return true  -- done
@@ -240,7 +308,7 @@ function Component:call_step(call_args)
 end
 
 function Component:call_action(call_args)
-    self.status = "Done"
+    self.status = "Doing something else"
 end
 
 -- RESPONSES
@@ -271,7 +339,7 @@ function Component:response_step(response_data)
 end
 
 function Component:response_step_zero(response_data)
-    self.status = "Response: "..response_data.response
+    self.status = "Response: "..tostring(response_data.response)
 end
 
 function Component:response_step_one(response_data)

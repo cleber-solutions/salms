@@ -4,6 +4,7 @@ grid = require "grid"
 
 function love.load()
     love.window.setTitle("salms: Software Architecture Live Diagrams")
+    love.window.setMode(1280, 750, {vsync=true,resizable=true,centered=true,minwidth=800,minheight=600})
     x_offset = 0
     y_offset = 0
 
@@ -12,10 +13,9 @@ function love.load()
     beat_interval = 0.75
     beat_counter = 0
     step_size = 7
-    love.window.vsync = true
 
-    grid_w = 140
-    grid_h = 80
+    grid_w = 160
+    grid_h = 84
     grid_space_w = math.floor(grid_w / 3)
     grid_space_h = math.floor(grid_h / 2)
     cell_w = grid_w + grid_space_w
@@ -58,7 +58,7 @@ function love.draw()
             c:draw(rx, ry)
 
             -- Connect to neighbours:
-            for idx, connector in ipairs(c["connectors"]) do
+            for idx, connector in ipairs(c.connectors) do
                 cx1, cy1, cx2, cy2 = unpack(connector)
                 love.graphics.line(
                     cx1 + rx, cy1 + ry,
@@ -102,7 +102,7 @@ function love.update(dt)
     if love.keyboard.isDown("x") then
         c = components_list[1]
         if c then
-            c:action()
+            c:do_call_action()
         end
     end
 end

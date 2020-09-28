@@ -2,7 +2,7 @@
 
 **FEEL FREE TO CONTRIBUTE TO THIS PROJECT**
 
-![GIF demonstranting the results](https://raw.githubusercontent.com/cleber-solutions/salms/master/img/grpc-dynamo-and-amqp.gif)
+![GIF demonstranting the results](https://raw.githubusercontent.com/cleber-solutions/salms/master/img/rpc-database-mq-and-consumers.gif)
 
 As a Software Architect I'm a big fan of
 **sequence diagrams**. I like the way they convey so much
@@ -143,3 +143,7 @@ You'll find more components inside the `components` directory.
 * Helping to improve the code, specially to make it
   easier to use for other Architects. (Check `TODO.md`
   file.)
+
+## Acknowledments
+
+* Icons made by <a href="https://www.flaticon.com/authors/pixel-perfect" title="Pixel perfect">Pixel perfect</a> from <a href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a>
