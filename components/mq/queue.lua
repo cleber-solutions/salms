@@ -13,7 +13,7 @@ function MQ_Queue:call_step(call_args)
     argument = call_args.argument
 
     -- Ignore other topics:
-    if argument ~= self.topic then
+    if not string.match(argument, self.topic) then
         if step == 0 then
             self.status = "Ignored: "..argument
             self:respond(call_args, self.failure_response)

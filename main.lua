@@ -1,5 +1,4 @@
 components = require "components"
-schema = require("schema")
 grid = require "grid"
 
 function love.load()
@@ -8,14 +7,18 @@ function love.load()
     x_offset = 0
     y_offset = 0
 
+
     draw_timer = 0
     beat_timer = 0
-    beat_interval = 0.75
     beat_counter = 0
     step_size = 7
 
+    -- Fine tuning:
+    -- TODO: load these from somewhere else
+    beat_interval = 1
     grid_w = 160
     grid_h = 84
+
     grid_space_w = math.floor(grid_w / 3)
     grid_space_h = math.floor(grid_h / 2)
     cell_w = grid_w + grid_space_w
@@ -28,6 +31,13 @@ function love.load()
     love.graphics.setNewFont(12)
     love.graphics.setColor(0,0,0)
     love.graphics.setBackgroundColor(255,255,255)
+
+    -- Load desired schema:
+    schema_path = arg[2]
+    if schema_path == nil then
+        schema_path = "schema.lua"
+    end
+    schema = dofile(schema_path)
 
     -- Initialize the schema:
     schema.init()
