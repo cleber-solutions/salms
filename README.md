@@ -24,8 +24,16 @@ component and be able to easily show basic things like:
 
 ## Running
 
+### With Love
+
 1. You must have [Löve](https://love2d.org/) installed.
-1. Inside the repo root directory, run `love .`.
+1. Inside the repo root directory, run `bin/run.sh`.
+
+### Without Love
+
+1. You must have Docker installed.
+1. Run `bin/setup.sh` to build the Docker image.
+1. Run `bin/docker-run.sh` to run.
 
 ### Mouse and keyboard
 
