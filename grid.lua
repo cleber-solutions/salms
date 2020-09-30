@@ -6,6 +6,7 @@ grid_directions = {
     left = {-1, 0},
     right = {1, 0}
 }
+grid_directions_names = {"up", "right", "down", "left"}
 grid_opposite_directions = {
     up = "down",
     down = "up",

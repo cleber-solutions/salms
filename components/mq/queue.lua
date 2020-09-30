@@ -4,7 +4,6 @@ MQ_Queue = {
     messages_counter = 0,
     max_messages = 20,
     in_flight_messages_counter = 0,
-    last_id = 0,
     delivery_method = "mq.consume",
     icon = "list.png",
 }
@@ -48,31 +47,23 @@ function MQ_Queue:post_beat()
     remaining_messages = self.messages_counter - self.in_flight_messages_counter
     if remaining_messages > 0 then
         self.status = "Delivering"
-        message = {
-            instances = 0,
-            message_id = self.last_id
-        }
-        sent = self:call_neighbours(self.delivery_method, self.topic, message)
-        if sent > 0 then
-            message.instances = sent
+        message = {} -- TODO: add topic, here.
+        sent = self:fanout_to_neighbours(self.delivery_method, self.topic, message)
+        if sent then
             self.in_flight_messages_counter = self.in_flight_messages_counter + 1
-            self.last_id = self.last_id + 1
         end
     end
 end
 
 function MQ_Queue:response_step_one(response_data)
     if response_data.response == response_data.responder.success_response then
-        message = response_data.context
-
-        if message.instances > 1 then
-            message.instances = message.instances - 1
-        else
-            self.status = "Delivered!"
-            self.messages_counter = self.messages_counter - 1
-            self.in_flight_messages_counter = self.in_flight_messages_counter - 1
-        end
+        self.status = "Delivered"
+        self.messages_counter = self.messages_counter - 1
+    elseif response_data.response == response_data.responder.failure_response then
+        self.status = "Failed to deliver"
     end
+
+    self.in_flight_messages_counter = self.in_flight_messages_counter - 1
 end
 
 function MQ_Queue:post_draw(rx, ry)

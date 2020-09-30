@@ -58,7 +58,8 @@ Component = {
     success_response = 0,
     failure_response = 1,
     call_action_message = "Doing something",
-    output_type = nil
+    output_type = nil,
+    fanout_index = 1,
 }
 Component.__index = Component
 function Component:create(base, name, x, y)
@@ -190,27 +191,52 @@ function Component:call_neighbours(input_type, argument, context)
 
     successful_calls = 0
 
-    for direction_name, pos in pairs(grid_directions) do
-        ox, oy = unpack(pos)
-
-        if components_matrix[x+ox] then
-            n = components_matrix[x+ox][y+oy]
-            if n and n.input_type == input_type then
-                called_succesfully = self:call_neighbour(n, argument, self, context)
-                if called_succesfully then
-                    successful_calls = successful_calls + 1
-                    self.connectors[direction_name][2] = 1
-
-                    opposite_direction = grid_opposite_directions[direction_name]
-                    n.connectors[opposite_direction][2] = 1
-                end
-            end
+    self.fanout_index = 1
+    for i=0,3 do
+        called_succesfully = self:do_fanout_to_neighbours(input_type, argument, context)
+        if called_succesfully then
+            successful_calls = successful_calls + 1
         end
     end
 
     return successful_calls
 end
 
+function Component:do_fanout_to_neighbours(input_type, argument, context)
+    x, y = unpack(self.coordinates)
+
+    called_succesfully = false
+
+    direction_name = grid_directions_names[self.fanout_index]
+    pos = grid_directions[direction_name]
+    self.fanout_index = (self.fanout_index % 4) + 1
+
+    ox, oy = unpack(pos)
+    if components_matrix[x+ox] then
+        n = components_matrix[x+ox][y+oy]
+        if n and n.input_type == input_type then
+            called_succesfully = self:call_neighbour(n, argument, self, context)
+            if called_succesfully then
+                -- Adjust connector redness:
+                self.connectors[direction_name][2] = 1
+                opposite_direction = grid_opposite_directions[direction_name]
+                n.connectors[opposite_direction][2] = 1
+            end
+        end
+    end
+
+    return called_succesfully
+end
+
+function Component:fanout_to_neighbours(input_type, argument, context)
+    for i=0,3 do
+        called_succesfully = self:do_fanout_to_neighbours(input_type, argument, context)
+        if called_succesfully then
+            return true
+        end
+    end
+    return false
+end
 
 function Component:call_neighbour(n, argument, caller, context)
     if n.disabled then

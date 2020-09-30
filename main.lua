@@ -13,17 +13,12 @@ function love.load()
 
     draw_timer = 0
     beat_timer = 0
+    beat_interval = 0.1
     beat_counter = 0
     step_size = 15
 
     -- Fine tuning:
     -- TODO: load these from somewhere else
-    beat_interval = os.getenv("BEAT_INTERVAL")
-    if beat_interval == nil then
-        beat_interval = 1
-    else
-        beat_interval = tonumber(beat_interval)
-    end
     grid_w = 170
     grid_h = 90
 
@@ -117,9 +112,9 @@ end
 
 function love.update(dt)
     draw_timer = draw_timer + dt
-    if draw_timer < 0.075 then
-        diff = draw_timer - 0.075
-        love.timer.sleep(diff)
+    if draw_timer < 0.1 then
+        -- diff = draw_timer - 0.1
+        love.timer.sleep(0.05)
         return
     end
     draw_timer = 0
