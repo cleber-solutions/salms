@@ -1,5 +1,18 @@
 local grid = {}
 
+grid_directions = {
+    up = {0, -1},
+    down = {0, 1},
+    left = {-1, 0},
+    right = {1, 0}
+}
+grid_opposite_directions = {
+    up = "down",
+    down = "up",
+    left = "right",
+    right = "left"
+}
+
 function draw_grid()
     love.graphics.setColor(0.4, 0.4, 0.4)
 

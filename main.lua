@@ -7,22 +7,30 @@ function love.load()
     x_offset = 0
     y_offset = 0
 
-
     draw_timer = 0
     beat_timer = 0
     beat_counter = 0
-    step_size = 7
+    step_size = 15
 
     -- Fine tuning:
     -- TODO: load these from somewhere else
-    beat_interval = 1
-    grid_w = 160
-    grid_h = 84
+    beat_interval = os.getenv("BEAT_INTERVAL")
+    if beat_interval == nil then
+        beat_interval = 1
+    else
+        beat_interval = tonumber(beat_interval)
+    end
+    grid_w = 170
+    grid_h = 90
+
+    beat_debounce = false
 
     grid_space_w = math.floor(grid_w / 3)
     grid_space_h = math.floor(grid_h / 2)
     cell_w = grid_w + grid_space_w
     cell_h = grid_h + grid_space_h
+
+    love.graphics.setLineWidth(2)
 
     should_draw_grid = false
 
@@ -51,6 +59,9 @@ function love.draw()
     wh = love.graphics.getHeight()
     ww = love.graphics.getWidth()
 
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.print(beat_counter, 5, 5)
+
     if highlighted_rectangle then
         rx, ry = coords_from_grid(unpack(highlighted_rectangle))
         love.graphics.setColor(0.5, 0.5, 0.5)
@@ -68,12 +79,18 @@ function love.draw()
             c:draw(rx, ry)
 
             -- Connect to neighbours:
-            for idx, connector in ipairs(c.connectors) do
-                cx1, cy1, cx2, cy2 = unpack(connector)
-                love.graphics.line(
-                    cx1 + rx, cy1 + ry,
-                    cx2 + rx, cy2 + ry
-                )
+            for direction_name, connector_data in pairs(c.connectors) do
+                if connector_data then
+                    connector, redness = unpack(connector_data)
+                    cx1, cy1, cx2, cy2 = unpack(connector)
+
+                    love.graphics.setColor(redness, 0.5, 0.5)
+
+                    love.graphics.line(
+                        cx1 + rx, cy1 + ry,
+                        cx2 + rx, cy2 + ry
+                    )
+                end
             end
         end
     end
@@ -81,20 +98,27 @@ end
 
 function love.update(dt)
     draw_timer = draw_timer + dt
-    beat_timer = beat_timer + dt
-    if draw_timer < 0.025 then
+    if draw_timer < 0.05 then
         return
     end
     draw_timer = 0
 
-    if beat_timer > beat_interval then
-        beat(beat_timer)
-        beat_timer = 0
-    end
-
     if love.keyboard.isDown("q") then
         love.window.close()
         os.exit()
+    elseif love.keyboard.isDown("space") then
+        if not beat_debounce then
+            beat()
+            beat_debounce = true
+        end
+    end
+
+    if beat_debounce then
+        beat_timer = beat_timer + dt
+        if beat_timer > beat_interval then
+            beat_timer = 0
+            beat_debounce = false
+        end
     end
 
     if love.keyboard.isDown("left") then
@@ -126,7 +150,7 @@ function love.mousepressed(x, y, button, istouch)
 end
 
 ------------------------------------------------
-function beat(t)
+function beat()
     beat_counter = (beat_counter + 1) % 1000
 
     for idx, c in ipairs(components_list) do

@@ -11,9 +11,9 @@
 ## Keybindings
 
 * Press `c' to center on selected cell.
-* Press `Space` to enable manual beats.
+* ~~Press `Space` to enable manual beats~~.
 * Press `Return` to trigger action on selected cell.
-* Use arrow keys to navigate throuhg the grid.
+* Use arrow keys to navigate through cells.
 * Press `Escape` to clean up everything and start again.
 
 ## Components

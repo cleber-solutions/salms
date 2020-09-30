@@ -27,9 +27,34 @@ component and be able to easily show basic things like:
 1. You must have [Löve](https://love2d.org/) installed.
 1. Inside the repo root directory, run `love .`.
 
+### Mouse and keyboard
+
+* Arrow keys: for panning around.
+* `x`: to activate the **first component** (the one at (0,0)).
+* `spacebar`: to advance one step (you can hold the key down to enable
+  auto-advante).
+* `q`: quit the program.
+* Left mouse button: to select a component.
+* Right mouse button: to **activate** a component.
+
+Please note that "activation" of a component by default means to
+**disable** it. It's a way to pretend that the component is down and to
+see what happens in your system.
+
+`RPC_Caller` components calls RPCs when activated.
+
+
+You can customize components and actions. Look at `schema.lua` for
+examples.
+
 ### Defining a diagram
 
-Edit `schema.lua` and lay out your components as needed.
+I suggest you create a copy of `schema.lua` inside some `schemata`
+directory and lay out your components as needed.
+
+After that, just pass it as argument to the "run" script:
+
+    run.sh my-schema.lua
 
 ## How this system works
 
@@ -53,23 +78,19 @@ would:
 
 (The `status` is shown on screen when set.)
 
-    Right now the beats are time-based, but
-    I intend to allow users to
-    advance beats "by hand".
-
 ### Actions
 
 You can trigger the **first component** action by pressing
 `x`, or any other component by clicking with the right
 mouse button (button 3).
 
-(But remember: components are not forced to implement any
-action.)
+(But remember: components are not forced to implement any action. The
+default action is to disable the component.)
 
 ### Calls
 
-Each component has an `input_type` that is used to find
-which neighbour is the one that provides such a method.
+Each component has an `input_type` and an `output_type`. They are used to
+find which neighbour provides which method when a call happen.
 
 ### Grid and Neighbourhood
 

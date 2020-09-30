@@ -48,6 +48,8 @@ end
 Component = {
     success_response = 0,
     failure_response = 1,
+    call_action_message = "Doing something",
+    output_type = nil
 }
 Component.__index = Component
 function Component:create(base, name, x, y)
@@ -82,13 +84,13 @@ function Component:load_connectors()
     connectors = {}
 
     neighbourhood = {
-        {0, 1, {grid_w / 2, grid_h, grid_w / 2, grid_h + grid_space_h}}, -- down
-        {0, -1, {grid_w / 2, 0, grid_w / 2, -grid_space_h}}, -- up
-        {-1, 0, {0, grid_h / 2, -grid_space_w, grid_h / 2}}, -- left
-        {1, 0, {grid_w, grid_h / 2, grid_w + grid_space_w, grid_h / 2}} -- right
+        up = {0, -1, {grid_w / 2, 0, grid_w / 2, -grid_space_h}}, -- up
+        down = {0, 1, {grid_w / 2, grid_h, grid_w / 2, grid_h + grid_space_h}}, -- down
+        left = {-1, 0, {0, grid_h / 2, -grid_space_w, grid_h / 2}}, -- left
+        right = {1, 0, {grid_w, grid_h / 2, grid_w + grid_space_w, grid_h / 2}} -- right
     }
 
-    for idx, coords in ipairs(neighbourhood) do
+    for direction_name, coords in pairs(neighbourhood) do
         ox, oy, line_points = unpack(coords)
         rx = x + ox
         ry = y + oy
@@ -97,7 +99,9 @@ function Component:load_connectors()
         if line then
             cell = line[ry]
             if cell then
-                table.insert(connectors, line_points)
+                connectors[direction_name] = {line_points, 0}
+            else
+                connectors[direction_name] = nil
             end
         end
     end
@@ -178,12 +182,7 @@ function Component:call_neighbours(input_type, argument, context)
 
     successful_calls = 0
 
-    neighbours_positions = {
-        {0, 1}, {0, -1},
-        {1, 0}, {-1, 0}
-    }
-
-    for _, pos in ipairs(neighbours_positions) do
+    for direction_name, pos in pairs(grid_directions) do
         ox, oy = unpack(pos)
 
         if components_matrix[x+ox] then
@@ -192,6 +191,10 @@ function Component:call_neighbours(input_type, argument, context)
                 called_succesfully = self:call_neighbour(n, argument, self, context)
                 if called_succesfully then
                     successful_calls = successful_calls + 1
+                    self.connectors[direction_name][2] = 1
+
+                    opposite_direction = grid_opposite_directions[direction_name]
+                    n.connectors[opposite_direction][2] = 1
                 end
             end
         end
@@ -256,7 +259,18 @@ function Component:beat()
     self:process_calls()
     self:process_responses()
     self:post_beat()
+
+    -- Reset some states
     self.action_called = false
+
+    for direction_name, connector_data in pairs(self.connectors) do
+        redness = connector_data[2]
+        if redness > 0.5 then
+            connector_data[2] = redness - 0.05
+        end
+    end
+
+
 end
 
 function Component:post_beat()
@@ -308,7 +322,11 @@ function Component:call_step(call_args)
 end
 
 function Component:call_action(call_args)
-    self.status = "Doing something else"
+    self.status = self.call_action_message
+
+    if self.output_type then
+        self:call_neighbours(self.output_type, "DATA", nil)
+    end
 end
 
 -- RESPONSES
