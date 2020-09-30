@@ -3,7 +3,11 @@ grid = require "grid"
 
 function love.load()
     love.window.setTitle("salms: Software Architecture Live Diagrams")
-    love.window.setMode(1280, 750, {vsync=true,resizable=true,centered=true,minwidth=800,minheight=600})
+    love.window.setMode(1280, 750, {resizable=true,centered=true,minwidth=800,minheight=600})
+    love.window.maximize()
+    wh = love.graphics.getHeight()
+    ww = love.graphics.getWidth()
+
     x_offset = 0
     y_offset = 0
 
@@ -56,9 +60,6 @@ function love.draw()
         draw_grid()
     end
 
-    wh = love.graphics.getHeight()
-    ww = love.graphics.getWidth()
-
     love.graphics.setColor(0, 0, 0)
     love.graphics.print(beat_counter, 5, 5)
 
@@ -71,11 +72,12 @@ function love.draw()
     for idx, c in ipairs(components_list) do
         rx, ry = coords_from_grid(unpack(c["coordinates"]))
 
-        love.graphics.setColor(0.2, 0.2, 0.2)
-        love.graphics.rectangle("line", rx, ry, grid_w, grid_h)
 
         -- Draw only VISIBLE components
         if not (rx < -grid_w or ry < -grid_h or rx > ww or ry > wh) then
+            love.graphics.setColor(0.2, 0.2, 0.2)
+            love.graphics.rectangle("line", rx, ry, grid_w, grid_h)
+
             c:draw(rx, ry)
 
             -- Connect to neighbours:
@@ -101,6 +103,10 @@ function love.update(dt)
     if draw_timer < 0.05 then
         return
     end
+
+    wh = love.graphics.getHeight()
+    ww = love.graphics.getWidth()
+
     draw_timer = 0
 
     if love.keyboard.isDown("q") then

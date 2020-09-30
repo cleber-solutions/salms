@@ -325,7 +325,11 @@ function Component:call_action(call_args)
     self.status = self.call_action_message
 
     if self.output_type then
-        self:call_neighbours(self.output_type, "DATA", nil)
+        n_count = self:call_neighbours(self.output_type, "DATA", nil)
+        if n_count == 0 then
+            self:respond(call_args, self.failure_response)
+            return true
+        end
     end
 end
 
