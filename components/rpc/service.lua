@@ -17,20 +17,19 @@ function RPC_Service:call_action(call_args)
 end
 
 function RPC_Service:response_step_one(response_data)
-    last_call_type = nil
-
     next_step_index = response_data.context._next_step
     next_step = self.call_steps[next_step_index]
+    ctx = response_data.context
 
     if next_step then
         call_type, call_argument, status = unpack(next_step)
         self.status = status
 
-        ctx = response_data.context
         ctx._next_step = next_step_index + 1
         self:call_neighbours(call_type, call_argument, ctx)
     else
         self.status = "Response: "..response_data.response
-        response_data.context.waiting = false
+        self:respond(ctx, self.success_response)
+        ctx.waiting = false
     end
 end

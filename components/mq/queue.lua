@@ -2,10 +2,11 @@ MQ_Queue = {
     input_type = "mq.topic",
     topic = "some topic",
     messages_counter = 0,
+    max_messages = 20,
     in_flight_messages_counter = 0,
     last_id = 0,
     delivery_method = "mq.consume",
-    icon = "list.png"
+    icon = "list.png",
 }
 
 function MQ_Queue:call_step(call_args)
@@ -87,4 +88,26 @@ function MQ_Queue:post_draw(rx, ry)
         grid_w,
         'center'
     )
+
+    -- Draw the messages counting bar:
+    -- Position
+    bx = rx
+    by = ry + grid_h
+    w = grid_w
+    h = 10
+
+    -- Empty bar
+    love.graphics.rectangle("line", bx, by, w, h)
+
+    -- Filling
+    p = self.messages_counter / self.max_messages
+    if p > 1 then
+        p = 1
+        color = {1, 0, 0}
+    else
+        color = {0, 0, 1}
+    end
+    f = w * p
+    love.graphics.setColor(unpack(color))
+    love.graphics.rectangle("fill", bx, by, f, h)
 end

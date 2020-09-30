@@ -3,6 +3,15 @@ local components = {}
 components_matrix = {}
 components_list = {}
 
+status_colors = {
+    is_disabled = {0.8, 0.8, 0.8},
+    action_was_called = {1, 0.5, 0.25},
+    has_pending_call = {0.25, 1, 0.25},
+    has_pending_response = {0.5, 0.25, 1},
+    is_processing_calls = {0.25, 1, 1},
+    is_active = {1, 0.25, 0.25}
+}
+
 function components.add(component)
     -- Test for each neighbour.
     -- If it exists, create a new connector:
@@ -68,8 +77,8 @@ function Component:create(base, name, x, y)
     object.active = false
     object.disabled = false
 
-    object.input_list = {}
-    object.input_list_len = 0
+    object.calls_list = {}
+    object.calls_list_len = 0
     object.response_list = {}
     object.response_list_len = 0
     object.pending_call_len = 0
@@ -126,23 +135,22 @@ function Component:action()
 end
 
 function Component:draw(rx, ry)
+    color = nil
     if self.disabled then
-        love.graphics.setColor(0.8, 0.8, 0.8)
-        love.graphics.rectangle("fill", rx, ry, grid_w, grid_h)
+        color = status_colors.is_disabled
     elseif self.action_called then
-        love.graphics.setColor(1, 0.5, 0.25)
-        love.graphics.rectangle("fill", rx, ry, grid_w, grid_h)
+        color = status_colors.action_was_called
     elseif self.pending_call_len > 0 then
-        love.graphics.setColor(0.25, 1, 0.25)
-        love.graphics.rectangle("fill", rx, ry, grid_w, grid_h)
+        color = status_colors.has_pending_call
     elseif self.response_list_len > 0 then
-        love.graphics.setColor(0.5, 0.25, 1)
-        love.graphics.rectangle("fill", rx, ry, grid_w, grid_h)
-    elseif self.input_list_len > 0 then
-        love.graphics.setColor(0.25, 1, 1)
-        love.graphics.rectangle("fill", rx, ry, grid_w, grid_h)
+        color = status_colors.has_pending_response
+    elseif self.calls_list_len > 0 then
+        color = status_colors.is_processing_calls
     elseif self.active then
-        love.graphics.setColor(1, 0.25, 0.25)
+        color = status_colors.is_active
+    end
+    if color then
+        love.graphics.setColor(unpack(color))
         love.graphics.rectangle("fill", rx, ry, grid_w, grid_h)
     end
 
@@ -210,7 +218,8 @@ function Component:call_neighbour(n, argument, caller, context)
         return false
     end
 
-    table.insert(n.input_list, CallData:create(caller, argument, context))
+    -- TODO: do not manipulate neighbour attributes here. Call a proper method.
+    table.insert(n.calls_list, CallData:create(caller, argument, context))
     self.pending_call_len = self.pending_call_len + 1
     return true
 end
@@ -286,18 +295,19 @@ end
 -- CALLS
 function Component:process_calls()
     len = 0
-    for idx, call_args in ipairs(self.input_list) do
-        len = len + 1
+    new_list = {}
+    for idx, call_args in ipairs(self.calls_list) do
         if not call_args.waiting then
             call_args.step = call_args.step + 1
             done = self:call_step(call_args)
-            if done then
-                table.remove(self.input_list, idx)
+            if not done then
+                table.insert(new_list, call_args)
+                len = len + 1
             end
         end
     end
-
-    self.input_list_len = len
+    self.calls_list = new_list
+    self.calls_list_len = len
 end
 
 function Component:call_step(call_args)
@@ -336,14 +346,18 @@ end
 -- RESPONSES
 function Component:process_responses()
     len = 0
+    new_list = {}
     for idx, response_data in ipairs(self.response_list) do
-        len = len + 1
         response_data.step = response_data.step + 1
         done = self:response_step(response_data)
-        if done then
-            table.remove(self.response_list, idx)
+        if not done then
+            -- https://stackoverflow.com/questions/12394841/safely-remove-items-from-an-array-table-while-iterating
+            -- Search for the "Efficiency" answer.
+            table.insert(new_list, response_data)
+            len = len + 1
         end
     end
+    self.response_list = new_list
     self.response_list_len = len
 end
 

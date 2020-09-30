@@ -60,6 +60,8 @@ function love.draw()
         draw_grid()
     end
 
+    draw_legend()
+
     love.graphics.setColor(0, 0, 0)
     love.graphics.print(beat_counter, 5, 5)
 
@@ -98,16 +100,32 @@ function love.draw()
     end
 end
 
+function draw_legend()
+    x = 5
+    size = 12
+    space = 4
+    y = wh - size - 5
+    for name, color in pairs(status_colors) do
+        love.graphics.setColor(0, 0, 0)
+        love.graphics.print(name, x + size + space, y)
+        love.graphics.setColor(unpack(color))
+        love.graphics.rectangle("fill", x, y, size, size)
+
+        y = y - size - space
+    end
+end
+
 function love.update(dt)
     draw_timer = draw_timer + dt
-    if draw_timer < 0.05 then
+    if draw_timer < 0.075 then
+        diff = draw_timer - 0.075
+        love.timer.sleep(diff)
         return
     end
+    draw_timer = 0
 
     wh = love.graphics.getHeight()
     ww = love.graphics.getWidth()
-
-    draw_timer = 0
 
     if love.keyboard.isDown("q") then
         love.window.close()
